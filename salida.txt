@@ -1,0 +1,124 @@
+**********************************************************************************
+*                  SISTEMAS OPERATIVOS - PRÁCTICA DE CONTROL                     *
+*                               Curso 2019-20                                    *
+*                                                                                *
+*                                                                                *
+*              SRPT-SEGÚN NECESIDADES-MEMORIA CONTINUA-REUBICABLE                *
+*                                                                                *
+*                                                                                *
+*                              Alumnos nuevos:                                   *
+*                          · Daniel Puente Ramírez                               *
+*                                                                                *
+**********************************************************************************
+ 
+ 
+Estos son los datos de partida:
+
+-----------------------------------------------------------------
+|    PROCESOS   |    T.LLEG.    |     T.EJEC.   |     MEMORIA   |
+-----------------------------------------------------------------
+|	P01	|	2	|	5	|	5	|
+|	P02	|	2	|	20	|	10	|
+|	P03	|	2	|	5	|	19	|
+-----------------------------------------------------------------
+
+
+MEMORIA TOTAL: 30 M
+---------------------------------------------
+
+ T = 0          MT = 30
+ P01   2   5   5    -    -    -    -    - Fuera del sistema   
+ P02   2  20  10    -    -    -    -    - Fuera del sistema   
+ P03   2   5  19    -    -    -    -    - Fuera del sistema   
+[0;37m Tiempo Medio Espera = 0         Tiempo Medio de Retorno = 0
+(B[m[0;37m    |
+(B[m BM |||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||
+    |  0                                                                                     30 
+
+    |
+[0;37m BT | 
+(B[m[0;37m    |  0
+(B[m 
+ T = 2            MT = 30
+ El proceso 2 ha entrado en la cola.
+ El proceso P01 ha entrado en la cola.
+ El proceso 2 ha entrado en la cola.
+ El proceso P02 ha entrado en la cola.
+ El proceso 2 ha entrado en la cola.
+ El proceso P03 ha entrado en la cola.
+ El proceso P01 entra en memoria. 25 M restante.
+ El proceso P02 entra en memoria. 15 M restante.
+ El proceso P03 no cabe en memoria en este momento.
+ Se bloquean todos los procesos siguientes, para que el siguiente en entrar a memoria sea P03. 
+ 
+ Ref Tll Tej Mem Tesp Tret Trej Mini Mfin ESTADO 
+ P01   2   5   5    0    0    5    0    4 En ejecucion        
+ P02   2  20  10    0    0   20    5   14 En memoria          
+ P03   2   5  19    0    0    5    0    0 En espera           
+Tiempo Medio Espera = 0	Tiempo Medio de Retorno = 0
+
+ 
+    |P01            P02                                                                        
+ BM |█████████████████████████████████████████████||||||||||||||||||||||||||||||||||||||||||||| 30
+    |  0              5                            15                                        
+    |      P01
+ BT |||||||███
+    |  0     2 
+ 
+ T = 6            MT = 15
+ El proceso P03 no cabe en memoria en este momento.
+ Se bloquean todos los procesos siguientes, para que el siguiente en entrar a memoria sea P03. 
+ 
+ Ref Tll Tej Mem Tesp Tret Trej Mini Mfin ESTADO 
+ P01   2   5   5    0    4    1    0    4 En ejecucion        
+ P02   2  20  10    4    4   20    5   14 En memoria          
+ P03   2   5  19    4    4    5    0    0 En espera           
+Tiempo Medio Espera = 4.00	Tiempo Medio Retorno = 4.00
+
+ 
+    |P01            P02                                                                        
+ BM |█████████████████████████████████████████████||||||||||||||||||||||||||||||||||||||||||||| 30
+    |  0              5                            15                                        
+    |      P01            
+ BT |||||||███████████████
+    |  0     2             
+ 
+ T = 7            MT = 15
+ El proceso P01 ha terminado su ejecución.
+ El proceso P03 entra en memoria. 1 M restante.
+ 
+ Ref Tll Tej Mem Tesp Tret Trej Mini Mfin ESTADO 
+ P01   2   5   5    0    5    0    0    0 Terminado           
+ P02   2  20  10    5    5   20    0    9 En memoria          
+ P03   2   5  19    5    5    5   10   28 En ejecucion        
+Tiempo Medio Espera = 5.00	Tiempo Medio Retorno = 5.00
+
+ 
+    |P02                           P03                                                         
+ BM |███████████████████████████████████████████████████████████████████████████████████████||| 30
+    |  0                            10                                                       
+    |      P01            P03
+ BT |||||||██████████████████
+    |  0     2              7 
+ 
+ T = 12            MT = 1
+ El proceso P03 ha terminado su ejecución.
+ 
+ Ref Tll Tej Mem Tesp Tret Trej Mini Mfin ESTADO 
+ P01   2   5   5    0    5    0    0    0 Terminado           
+ P02   2  20  10   10   10   20    0    9 En ejecucion        
+ P03   2   5  19    5   10    0    0    0 Terminado           
+Tiempo Medio Espera = 7.00	Tiempo Medio Retorno = 8.00
+
+ 
+    |P02                                                                                       
+ BM |██████████████████████████████|||||||||||||||||||||||||||||||||||||||||||||||||||||||||||| 30
+    |  0                            10                                                       
+    |      P01            P03            P02
+ BT |||||||█████████████████████████████████
+    |  0     2              7             12 
+ 
+ Tiempo: 32  
+ Ejecución terminada.
+-----------------------------------------------------------
+ 
