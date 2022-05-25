@@ -1,4 +1,12 @@
 
-procTerminadoOK - P01 || procTerminadosTotal - P01 || Diff - 
-procTerminadoOK - P03 || procTerminadosTotal - P03 || Diff - 
-procTerminadoOK -  || procTerminadosTotal -  || Diff - 
+procTerminadoOK - P03 || procTerminadosTotal - P01 || Diff - P01
+procTerminadoOK - P04 || procTerminadosTotal - P02 || Diff - P01
+procTerminadoOK - P05 || procTerminadosTotal - P03 || Diff - P01
+procTerminadoOK - P06 || procTerminadosTotal - P04 || Diff - P01
+procTerminadoOK - P02 || procTerminadosTotal - P05 || Diff - P01
+procTerminadoOK - P07 || procTerminadosTotal - P06 || Diff - P01
+procTerminadoOK -  || procTerminadosTotal - P07 || Diff - P01
+procTerminadoOK -  || procTerminadosTotal -  || Diff - P01
+procTerminadoOK -  || procTerminadosTotal -  || Diff - P01
+procTerminadoOK -  || procTerminadosTotal -  || Diff - P01
+procTerminadoOK -  || procTerminadosTotal -  || Diff - P01
