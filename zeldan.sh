@@ -662,12 +662,10 @@ function pintaMP() {
     local contadorBloques=0 # variable auxiliar para contar en que bloque de memoria estamos iterando se persiste a lo largo del bucle de lineas
 
     anchoTotal=$(tput cols)
-
     #Una vez que lleguemos a la memoria anchoMaxPorLinea, saltamos de lineas, así hasta llegar a lineasTotales
     anchoMaxPorLinea=$((anchoTotal - 4))
     anchoMaxPorLinea=$((anchoMaxPorLinea / tamBloque - 1))
     lineasTotales=$((memTotal / anchoMaxPorLinea + 1))
-
     bloquesRellenar=$anchoMaxPorLinea
 
     if [[ $bloquesRellenar -gt $memTotal ]]; then
@@ -798,25 +796,24 @@ function pintaCPU() {
     local contadorBloques=0 # variable auxiliar para contar en que bloque de memoria estamos iterando se persiste a lo largo del bucle de lineas
 
     anchoTotal=$(tput cols)
-    echo "anchoTotal:$anchoTotal"
+
     local anchoStrMem=$(echo "$tiempo" | wc -l)
     anchoStrMem=$((anchoStrMem + 6))
     anchoStrMem=$((anchoStrMem / tamBloque + 1)) #cuantos bloques necesitamos para el texto 'MT = XXX'
-    echo "anchoStrMem:$anchoStrMem"
+
     local bloquesTotalesNecesarios=$((tiempo + anchoStrMem))
-    echo "bloquesTotalesNecesarios:$bloquesTotalesNecesarios"
+
     #Una vez que lleguemos a la memoria anchoMaxPorLinea, saltamos de lineas, así hasta llegar a lineasTotales
     anchoMaxPorLinea=$((anchoTotal - 4))
     anchoMaxPorLinea=$((anchoMaxPorLinea / tamBloque - 1))
     lineasTotales=$((bloquesTotalesNecesarios / anchoMaxPorLinea + 1))
-    echo "anchoMaxPorLinea:$anchoMaxPorLinea"
-    echo "lineasTotales:$lineasTotales"
+
     bloquesRellenar=$anchoMaxPorLinea
 
     if [[ $bloquesRellenar -gt $bloquesTotalesNecesarios ]]; then
         bloquesRellenar=$bloquesTotalesNecesarios
     fi
-    echo "bloquesRellenar:$bloquesRellenar"
+
     # Hacemos los calculos por cada liene
     for ((l = 1; l <= lineasTotales; l++)); do
         #reseteamos las variables para comenzar la linea de cero, y no mesclar con lo de la linea anterior
@@ -825,7 +822,7 @@ function pintaCPU() {
         barraPosicionTiempo=""
 
         # Creamos las cadenas correspondientes para esta linea
-        for i in $(seq 0 $((bloquesRellenar - anchoStrMem + 1 ))); do
+        for i in $(seq 0 $((bloquesRellenar))); do
             if [[ contadorBloques -gt $((tiempo)) ]]; then # verificamos que solo se cuente hasta el ultimo bloque de moemoria solo
                 break
             fi
@@ -875,7 +872,7 @@ function pintaCPU() {
                 barraPosicionTiempo="${barraPosicionTiempo}$textAux"
 
             else
-                textAux=$(printf "%${tamBloque}s" "$contadorBloques")
+                textAux=$(printf "%${tamBloque}s" " ")
                 barraPosicionTiempo="${barraPosicionTiempo}$textAux" # agregamos 3 espacios vacios
             fi
 
@@ -1863,11 +1860,11 @@ function main() {
 
     mainAlgoritmo
 
+    convertirFicheroColorEnBlancoNegro $RUTA_FICHERO_REPORTES_COLOR $RUTA_FICHERO_REPORTES_NEGRO "false"
+
     #Esperar interaccion del usuario
     read -ers -p "Pulse [enter] para continuar "
     clear
-
-    convertirFicheroColorEnBlancoNegro $RUTA_FICHERO_REPORTES_COLOR $RUTA_FICHERO_REPORTES_NEGRO "false"
 
     menuVisualizacion
 }
