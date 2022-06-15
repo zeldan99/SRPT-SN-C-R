@@ -29,7 +29,8 @@ declare -r EN_PAUSA="En Pausa"
 #Colores
 #Fin de color
 declare -r NC='\e[0m'        # no color
-declare -r _DEFAULT='\e[49m' #Color por defecto
+declare -r DEFAULT='\e[39m'  #Color por defecto texto
+declare -r _DEFAULT='\e[49m' #Color por defecto fondo
 #Colores de texto
 declare -r RED='\e[31m'
 declare -r GREEN='\e[32m'
@@ -624,10 +625,29 @@ function imprimirTablaProcesos() {
     pintaCPU "$tiempo"
 }
 
+function calculaTamBloque() {
+    local tamBloque=0
+    local i
+    local sumatoria=0
+
+    for ((i = 0; i < numeroProcesos; i++)); do
+        sumatoria=$((sumatoria + tiempoLlegada[$i] + tiempoEjecucion[$i]))
+    done
+
+    tamBloque=${#sumatoria}
+    tamBloque=$((tamBloque + 1))
+
+    if [[ tamBloque -le 3 ]]; then
+        tamBloque=3
+    fi
+
+    echo "${tamBloque}"
+}
+
 #Funcion pintaMP
 #Desc   : Pinta la  MP en un instante de tiempo.
 function pintaMP() {
-    local tamBloque=3
+    local tamBloque=$(calculaTamBloque)
     local barraNombres=""       #Cadena resultado que muestra el nombre de los procesos que residen en cada particion
     local barraMem=""           #Cadena resultado que muestra la proporcion de cada particion
     local barraPosicionesMem="" #Cadena resultado que muestra las direcciones de la MP
@@ -678,15 +698,15 @@ function pintaMP() {
                     textAux=$(printf "%-${tamBloque}s" " ")
                     barraNombres="${barraNombres}${colorProceso[$procesoActual]}${textAux}${NC}" # agregamos 3 espacios vacios
                 fi
-                textAux=$(printf "%-${tamBloque}s" " " | tr ' ' '*')
+                textAux=$(printf "%-${tamBloque}s" " " | tr ' ' '#')
                 barraMem="${barraMem}${colorFondoProceso[$procesoActual]}${colorProceso[$procesoActual]}${textAux}${NC}"
 
             else # este bloque no tiene ningun proceso
                 textAux=$(printf "%-${tamBloque}s" "")
                 barraNombres="${barraNombres}${textAux}" # agregamos 3 espacios vacios
 
-                textAux=$(printf "%-${tamBloque}s" " " | tr ' ' '#')
-                barraMem="${barraMem}\e[48;5;7m${textAux}${NC}"
+                textAux=$(printf "%-${tamBloque}s" " " | tr ' ' '.')
+                barraMem="${barraMem}\e[48;5;7m\e[38;5;7m${textAux}${NC}"
 
             fi
 
@@ -696,8 +716,8 @@ function pintaMP() {
                 textAux=$(printf "%${tamBloque}s" "$contadorBloques")
                 barraPosicionesMem="${barraPosicionesMem}$textAux" #FIXME que pasa con memoria +2 digitos
             else
-                textAux=$(printf "%${tamBloque}s" " ") #remove
-                barraPosicionesMem="${barraPosicionesMem}$textAux"    # agregamos 3 espacios vacios
+                textAux=$(printf "%${tamBloque}s" " ")             #remove
+                barraPosicionesMem="${barraPosicionesMem}$textAux" # agregamos 3 espacios vacios
             fi
 
             contadorBloques=$((contadorBloques + 1))
@@ -764,7 +784,7 @@ function pintaMP() {
 #Desc   : Pinta la  CPU en un instante de tiempo.
 function pintaCPU() {
     local tiempo=$1 # tiempo de ejecucion actual
-    local tamBloque=3
+    local tamBloque=$(calculaTamBloque)
     local barraNombres=""        #Cadena resultado que muestra el nombre de los procesos que residen en cada particion
     local barraTiempo=""         #Cadena resultado que muestra la proporcion de cada particion
     local barraPosicionTiempo="" #Cadena resultado que muestra las direcciones de la MP
@@ -778,21 +798,34 @@ function pintaCPU() {
     local contadorBloques=0 # variable auxiliar para contar en que bloque de memoria estamos iterando se persiste a lo largo del bucle de lineas
 
     anchoTotal=$(tput cols)
-
+    echo "anchoTotal:$anchoTotal"
+    local anchoStrMem=$(echo "$tiempo" | wc -l)
+    anchoStrMem=$((anchoStrMem + 6))
+    anchoStrMem=$((anchoStrMem / tamBloque + 1)) #cuantos bloques necesitamos para el texto 'MT = XXX'
+    echo "anchoStrMem:$anchoStrMem"
+    local bloquesTotalesNecesarios=$((tiempo + anchoStrMem))
+    echo "bloquesTotalesNecesarios:$bloquesTotalesNecesarios"
     #Una vez que lleguemos a la memoria anchoMaxPorLinea, saltamos de lineas, así hasta llegar a lineasTotales
     anchoMaxPorLinea=$((anchoTotal - 4))
-    anchoMaxPorLinea=$((anchoMaxPorLinea / tamBloque))
-    lineasTotales=$((tiempo / anchoMaxPorLinea + 1))
+    anchoMaxPorLinea=$((anchoMaxPorLinea / tamBloque - 1))
+    lineasTotales=$((bloquesTotalesNecesarios / anchoMaxPorLinea + 1))
+    echo "anchoMaxPorLinea:$anchoMaxPorLinea"
+    echo "lineasTotales:$lineasTotales"
+    bloquesRellenar=$anchoMaxPorLinea
 
+    if [[ $bloquesRellenar -gt $bloquesTotalesNecesarios ]]; then
+        bloquesRellenar=$bloquesTotalesNecesarios
+    fi
+    echo "bloquesRellenar:$bloquesRellenar"
     # Hacemos los calculos por cada liene
-    for ((l = 0; l < lineasTotales; l++)); do
+    for ((l = 1; l <= lineasTotales; l++)); do
         #reseteamos las variables para comenzar la linea de cero, y no mesclar con lo de la linea anterior
         barraNombres=""
         barraTiempo=""
         barraPosicionTiempo=""
 
         # Creamos las cadenas correspondientes para esta linea
-        for i in $(seq 0 $((anchoMaxPorLinea - 1))); do
+        for i in $(seq 0 $((bloquesRellenar - anchoStrMem + 1 ))); do
             if [[ contadorBloques -gt $((tiempo)) ]]; then # verificamos que solo se cuente hasta el ultimo bloque de moemoria solo
                 break
             fi
@@ -814,7 +847,7 @@ function pintaCPU() {
                     textAux=$(printf "%-${tamBloque}s" " ")
                     barraTiempo="${barraTiempo}${textAux}"
                 else
-                    textAux=$(printf "%-${tamBloque}s" " " | tr ' ' '*')
+                    textAux=$(printf "%-${tamBloque}s" " " | tr ' ' '#')
                     barraTiempo="${barraTiempo}${colorFondoProceso[$procesoActual]}${colorProceso[$procesoActual]}${textAux}${NC}"
                 fi
 
@@ -830,8 +863,8 @@ function pintaCPU() {
                     textAux=$(printf "%-${tamBloque}s" " ")
                     barraTiempo="${textAux}${NC}"
                 else
-                    textAux=$(printf "%-${tamBloque}s" " " | tr ' ' '#')
-                    barraTiempo="${barraTiempo}\e[48;5;7m${textAux}${NC}"
+                    textAux=$(printf "%-${tamBloque}s" " " | tr ' ' '.')
+                    barraTiempo="${barraTiempo}\e[48;5;7m\e[38;5;7m${textAux}${NC}"
                 fi
             fi
 
@@ -842,7 +875,7 @@ function pintaCPU() {
                 barraPosicionTiempo="${barraPosicionTiempo}$textAux"
 
             else
-                textAux=$(printf "%${tamBloque}s" "")
+                textAux=$(printf "%${tamBloque}s" "$contadorBloques")
                 barraPosicionTiempo="${barraPosicionTiempo}$textAux" # agregamos 3 espacios vacios
             fi
 
@@ -852,9 +885,7 @@ function pintaCPU() {
 
         local anchoUltimaLinea="${#barraPosicionTiempo}"
         anchoUltimaLinea=$((anchoUltimaLinea / tamBloque))
-        local anchoStrMem=$(echo "$tiempo" | wc -l)
         anchoUltimaLinea=$((anchoUltimaLinea + anchoStrMem))
-        anchoUltimaLinea=$((anchoUltimaLinea + 6))
 
         if [[ $lineasTotales -eq 1 ]]; then # si todo cabe en una linea
             if [[ $anchoMaxPorLinea -ge $anchoUltimaLinea ]]; then
@@ -871,11 +902,11 @@ function pintaCPU() {
                 echo -e "    |"
             fi
         else
-            if [[ $l -eq 0 ]]; then # primera linea
+            if [[ $l -eq 1 ]]; then # primera linea
                 echo -e "    |$barraNombres"
                 echo -e " BM |$barraTiempo"
                 echo -e "    |$barraPosicionTiempo"
-            elif [[ $l -eq $((lineasTotales - 1)) ]]; then # ultima linea imprimimos el total de memoria
+            elif [[ $l -eq $((lineasTotales)) ]]; then # ultima linea imprimimos el total de memoria
 
                 if [[ $anchoMaxPorLinea -ge $anchoUltimaLinea ]]; then
                     echo -e "     $barraNombres|"
