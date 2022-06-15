@@ -13,7 +13,7 @@ declare -r NOMBRE_FICHERO_RANGOS_DEFECTO="datosrangos.txt"
 declare -r RUTA_FICHERO_RANGOS_DEFECTO=${DIRECTORIO_RANGOS}${NOMBRE_FICHERO_RANGOS_DEFECTO}
 
 declare -r DIRECTORIO_REPORTES="./informes/"
-declare -r NOMBRE_FICHERO_REPORTES_COLOR="informeCOLO.txt"
+declare -r NOMBRE_FICHERO_REPORTES_COLOR="informeCOLOR.txt"
 declare -r NOMBRE_FICHERO_REPORTES_NEGRO="informeBN.txt"
 declare -r RUTA_FICHERO_REPORTES_NEGRO=${DIRECTORIO_REPORTES}${NOMBRE_FICHERO_REPORTES_NEGRO}
 declare -r RUTA_FICHERO_REPORTES_COLOR=${DIRECTORIO_REPORTES}${NOMBRE_FICHERO_REPORTES_COLOR}
@@ -116,12 +116,15 @@ function inicializaVariables() {
 # Descripcion: Ordena los procesos por tiempo de llegada mediante el algoritmo de ordenacion por seleccion.
 function ordenaPorTiempoLLegada() {
     local i
+    local j
     local aux
     local menor
+    local tam
+    tam=${#nombreProceso[@]}
 
-    for i in $(seq 0 $((numeroProcesos - 2))); do
+    for i in $(seq 0 $((tam - 1))); do
         menor=$i
-        for j in $(seq $((i + 1)) $((numeroProcesos - 1))); do
+        for j in $(seq $((i + 1)) $((tam - 1))); do
             if [ "${tiempoLlegada[$menor]}" -gt "${tiempoLlegada[$j]}" ]; then
                 menor=$j
             fi
@@ -630,6 +633,7 @@ function pintaMP() {
     local barraPosicionesMem="" #Cadena resultado que muestra las direcciones de la MP
     local lineasTotales=0       #Numero de lineas que se tienen que dibujar
     local anchoMaxPorLinea=0    #numero maximo de columanas por lina
+    local bloquesRellenar       #numero de bloques que se tienen que rellenar
     local anchoTotal=0          #numero de columas de la terminal actual
     local i                     # iterador
     local l                     # iterador
@@ -641,23 +645,24 @@ function pintaMP() {
 
     #Una vez que lleguemos a la memoria anchoMaxPorLinea, saltamos de lineas, así hasta llegar a lineasTotales
     anchoMaxPorLinea=$((anchoTotal - 4))
-    anchoMaxPorLinea=$((anchoMaxPorLinea / tamBloque))
+    anchoMaxPorLinea=$((anchoMaxPorLinea / tamBloque - 1))
     lineasTotales=$((memTotal / anchoMaxPorLinea + 1))
 
-    if [[ $anchoMaxPorLinea -gt $memTotal ]]; then
-        anchoMaxPorLinea=$memTotal
-    fi
+    bloquesRellenar=$anchoMaxPorLinea
 
+    if [[ $bloquesRellenar -gt $memTotal ]]; then
+        bloquesRellenar=$memTotal
+    fi
     # Hacemos los calculos por cada liene
-    for ((l = 0; l < lineasTotales; l++)); do
+    for ((l = 1; l <= lineasTotales; l++)); do
         #reseteamos las variables para comenzar la linea de cero, y no mesclar con lo de la linea anterior
         barraNombres=""
         barraMem=""
         barraPosicionesMem=""
 
         # Creamos las cadenas correspondientes para esta linea
-        for i in $(seq 0 $((anchoMaxPorLinea - 1))); do
-            if [[ contadorBloques -ge $((${#bloquesMemoria[@]} - 1)) ]]; then # verificamos que solo se cuente hasta el ultimo bloque de moemoria solo
+        for i in $(seq 0 $((bloquesRellenar))); do
+            if [[ contadorBloques -ge $((${#bloquesMemoria[@]})) ]]; then # verificamos que solo se cuente hasta el ultimo bloque de moemoria solo
                 break
             fi
             procesoActual=${bloquesMemoria[$contadorBloques]}
@@ -673,26 +678,26 @@ function pintaMP() {
                     textAux=$(printf "%-${tamBloque}s" " ")
                     barraNombres="${barraNombres}${colorProceso[$procesoActual]}${textAux}${NC}" # agregamos 3 espacios vacios
                 fi
-                textAux=$(printf "%-${tamBloque}s" " " | tr ' ' '█')
-                barraMem="${barraMem}${colorFondoProceso[$procesoActual]}${textAux}${_DEFAULT}"
+                textAux=$(printf "%-${tamBloque}s" " " | tr ' ' '*')
+                barraMem="${barraMem}${colorFondoProceso[$procesoActual]}${colorProceso[$procesoActual]}${textAux}${NC}"
 
             else # este bloque no tiene ningun proceso
-                textAux=$(printf "%-${tamBloque}s" " ")
+                textAux=$(printf "%-${tamBloque}s" "")
                 barraNombres="${barraNombres}${textAux}" # agregamos 3 espacios vacios
 
-                textAux=$(printf "%-${tamBloque}s" " "  | tr ' ' '█' )
-                barraMem="${barraMem}\e[48;5;7m${textAux}${_DEFAULT}"
+                textAux=$(printf "%-${tamBloque}s" " " | tr ' ' '#')
+                barraMem="${barraMem}\e[48;5;7m${textAux}${NC}"
 
             fi
 
             #Posiciones de memoria solo se pintan cuando hay cambio de procesos
             if [[ $procesoActual -ne ${bloquesMemoria[$((contadorBloques - 1))]} ]] || [[ $l -eq 0 && $i -eq 0 ]]; then
                 #Toca imprimir el posicion
-                textAux=$(printf "%${tamBloque}s" "$i")
+                textAux=$(printf "%${tamBloque}s" "$contadorBloques")
                 barraPosicionesMem="${barraPosicionesMem}$textAux" #FIXME que pasa con memoria +2 digitos
             else
-                textAux=$(printf "%${tamBloque}s" "")
-                barraPosicionesMem="${barraPosicionesMem}$textAux" # agregamos 3 espacios vacios
+                textAux=$(printf "%${tamBloque}s" " ") #remove
+                barraPosicionesMem="${barraPosicionesMem}$textAux"    # agregamos 3 espacios vacios
             fi
 
             contadorBloques=$((contadorBloques + 1))
@@ -701,15 +706,19 @@ function pintaMP() {
 
         local anchoUltimaLinea="${#barraPosicionesMem}"
         anchoUltimaLinea=$((anchoUltimaLinea / tamBloque))
+
         local anchoStrMem=$(echo "$memTotal" | wc -l)
+        anchoStrMem=$((anchoStrMem + 6))
+        anchoStrMem=$((anchoStrMem / tamBloque + 1)) #cuantos bloques necesitamos para el texto 'MT = XXX'
+
         anchoUltimaLinea=$((anchoUltimaLinea + anchoStrMem))
-        anchoUltimaLinea=$((anchoUltimaLinea + 6))
 
         if [[ $lineasTotales -eq 1 ]]; then # si todo cabe en una linea
+
             if [[ $anchoMaxPorLinea -ge $anchoUltimaLinea ]]; then
                 echo -e "    |$barraNombres|"
-                echo -e " BM |$barraTiempo| MT = $memTotal"
-                echo -e "    |$barraPosicionTiempo|"
+                echo -e " BM |$barraMem| MT = $memTotal"
+                echo -e "    |$barraPosicionesMem|"
             else
                 echo -e "    |$barraNombres"
                 echo -e " BM |$barraMem"
@@ -720,11 +729,11 @@ function pintaMP() {
                 echo -e "    |"
             fi
         else                        # Si son varias lineas las dividimos
-            if [[ $l -eq 0 ]]; then # primera linea
+            if [[ $l -eq 1 ]]; then # primera linea
                 echo -e "    |$barraNombres"
                 echo -e " BM |$barraMem"
                 echo -e "    |$barraPosicionesMem"
-            elif [[ $l -eq $((lineasTotales - 1)) ]]; then # ultima linea imprimimos el total de memoria
+            elif [[ $l -eq $lineasTotales ]]; then # ultima linea imprimimos el total de memoria
                 if [[ $anchoMaxPorLinea -ge $anchoUltimaLinea ]]; then
                     echo -e "     $barraNombres|"
                     echo -e "     $barraMem| MT = $memTotal"
@@ -805,8 +814,8 @@ function pintaCPU() {
                     textAux=$(printf "%-${tamBloque}s" " ")
                     barraTiempo="${barraTiempo}${textAux}"
                 else
-                    textAux=$(printf "%-${tamBloque}s" " ")
-                    barraTiempo="${barraTiempo}${colorFondoProceso[$procesoActual]}${textAux}${NC}"
+                    textAux=$(printf "%-${tamBloque}s" " " | tr ' ' '*')
+                    barraTiempo="${barraTiempo}${colorFondoProceso[$procesoActual]}${colorProceso[$procesoActual]}${textAux}${NC}"
                 fi
 
             else
@@ -821,7 +830,7 @@ function pintaCPU() {
                     textAux=$(printf "%-${tamBloque}s" " ")
                     barraTiempo="${textAux}${NC}"
                 else
-                    textAux=$(printf "%-${tamBloque}s" " ")
+                    textAux=$(printf "%-${tamBloque}s" " " | tr ' ' '#')
                     barraTiempo="${barraTiempo}\e[48;5;7m${textAux}${NC}"
                 fi
             fi
@@ -1089,7 +1098,7 @@ function introducirProcesosTeclado() {
     clear
     # Bucle que pide al usuario que confirme los datos introducidos
     while [[ $continuar == s ]]; do
-
+        ordenaPorTiempoLLegada
         n=$((n + 1))
 
         ###################### Tiempo llegada ######################
@@ -1193,6 +1202,7 @@ function mainIntroducirProcesosManual() {
     local rutaFicheroDatos=$1
 
     introducirProcesosTeclado
+    ordenaPorTiempoLLegada
     revisionDatosIntroducidos
     guardarDatosEnFichero "$rutaFicheroDatos"
     cecho " Datos correctos. Comienza." "$YELLOW"
@@ -1336,8 +1346,8 @@ function resumenRangos() {
     printf "\n"
     cecho " Generacion de datos aletorios." "${YELLOW}"
     printf "\n"
-    cecho " Rango memoria total: [${rangoMemTotal[0]}-${rangoMemTotal[1]}]"
-    cecho " Rango numero procesos: [${rangoNumeroProcesos[0]}-${rangoNumeroProcesos[1]}]"
+    cecho " Rango memoria total: [${rangoMemTotal[0]}-${rangoMemTotal[1]}] - Valor final: $memTotal"
+    cecho " Rango numero procesos: [${rangoNumeroProcesos[0]}-${rangoNumeroProcesos[1]}] - Valor final: $numeroProcesos"
     cecho " Rango tiempo llegada: [${rangoTiempoLLegada[0]}-${rangoTiempoLLegada[1]}]"
     cecho " Rango tiempo ejecucion: [${rangoTiempoEjecucion[0]}-${rangoTiempoEjecucion[1]}]"
     cecho " Rango tamano proceos: [${rangosTamMemoria[0]}-${rangosTamMemoria[1]}]"
@@ -1359,6 +1369,8 @@ function ingresarRangosManual() {
     rangoMemTotal[0]=$min
     rangoMemTotal[1]=$max
 
+    numAleatorio memTotal "${rangoMemTotal[0]}" "${rangoMemTotal[1]}"
+
     ok=x
     clear
     resumenRangos
@@ -1368,6 +1380,8 @@ function ingresarRangosManual() {
     scanfNum " ${CYAN}Maxiomo rango${NC} ${YELLOW}Numero de Procesos:${NC}" max "$min"
     rangoNumeroProcesos[0]=$min
     rangoNumeroProcesos[1]=$max
+
+    numAleatorio numeroProcesos "${rangoNumeroProcesos[0]}" "${rangoNumeroProcesos[1]}"
 
     ok=x
     clear
@@ -1421,7 +1435,7 @@ function guardarRangosEnFichero() {
 # Descripción: Muestra por la salida el menu de nombre de ficheros y pide al usuario que introduzca una opcion
 function seleccionarNombreFichero2() {
     clear
-    imprimeMenuNombreFichero "datos.txt" "Datos"
+    imprimeMenuNombreFicheroDatos "$NOMBRE_FICHERO_DATOS_DEFECTO"
     declare nuevoNombreFichero # variable utilitaria global
     local num=0
     local continuar="SI" # Cuando termine la entrada de datos, continuamos
@@ -1497,9 +1511,6 @@ function calculosAleatorios() {
     local i
     local valida=-1
 
-    numAleatorio numeroProcesos "${rangoNumeroProcesos[0]}" "${rangoNumeroProcesos[1]}"
-    numAleatorio memTotal "${rangoMemTotal[0]}" "${rangoMemTotal[1]}"
-
     for ((i = 0; i < numeroProcesos; i++)); do
         numAleatorio tiempoLlegada["$i"] "${rangoTiempoLLegada[0]}" "${rangoTiempoLLegada[1]}"
         numAleatorio tiempoEjecucion["$i"] "${rangoTiempoEjecucion[0]}" "${rangoTiempoEjecucion[1]}"
@@ -1533,6 +1544,7 @@ function mainAleatorioManual() {
     ordenaPorTiempoLLegada
     guardarDatosEnFichero "$nombreficheroGruadarDatos"
     imprimeResumen
+    read -ers -p " Pulse [enter] para continuar "
     clear
 
 }
@@ -1584,7 +1596,6 @@ function leerProcesosDesdeFicheroRangos() {
     ordenaPorTiempoLLegada
     guardarDatosEnFichero "$nombreficheroGruadarDatos"
     imprimeResumen
-    local ok
     #Esperar interaccion del usuario
     read -ers -p " Pulse [enter] para continuar "
     clear
@@ -1698,9 +1709,9 @@ function seleccionFormaVolcado() {
     cecho " Selecciona un opcion de volcado de datos:"
     cecho " ─────────────────────────────────────────────────────────"
     cecho " 1) Por eventos" "$YELLOW"
-    cecho " 2) Automatico (tiempo esper definido por usuario)" "$YELLOW"
-    cecho " 3) completo" "$YELLOW"
-    cecho " 4) Por unidad de tiempo" "$YELLOW"
+    cecho " 2) Automatico (tiempo de espera entre volcados definido por usuario)" "$YELLOW"
+    cecho " 3) Completo" "$YELLOW"
+    cecho " 4) Por unidad de tiempo (CPU)" "$YELLOW"
     cecho " ─────────────────────────────────────────────────────────"
     echo " "
     cecho " Introduce una opcion: " "$CYAN"
