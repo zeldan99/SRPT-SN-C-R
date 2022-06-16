@@ -887,11 +887,11 @@ function pintaCPU() {
         if [[ $lineasTotales -eq 1 ]]; then # si todo cabe en una linea
             if [[ $anchoMaxPorLinea -ge $anchoUltimaLinea ]]; then
                 echo -e "    |$barraNombres|"
-                echo -e " BM |$barraTiempo| T = $tiempo"
+                echo -e " BT |$barraTiempo| T = $tiempo"
                 echo -e "    |$barraPosicionTiempo|"
             else
                 echo -e "    |$barraNombres"
-                echo -e " BM |$barraTiempo"
+                echo -e " BT |$barraTiempo"
                 echo -e "    |$barraPosicionTiempo"
 
                 echo -e "    |"
@@ -901,7 +901,7 @@ function pintaCPU() {
         else
             if [[ $l -eq 1 ]]; then # primera linea
                 echo -e "    |$barraNombres"
-                echo -e " BM |$barraTiempo"
+                echo -e " BT |$barraTiempo"
                 echo -e "    |$barraPosicionTiempo"
             elif [[ $l -eq $((lineasTotales)) ]]; then # ultima linea imprimimos el total de memoria
 
